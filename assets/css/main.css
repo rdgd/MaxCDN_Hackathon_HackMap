@@ -1,0 +1,267 @@
+
+  ::selection{ background-color: #E13300; color: white; }
+  ::moz-selection{ background-color: #E13300; color: white; }
+  ::webkit-selection{ background-color: #E13300; color: white; }
+
+  html, body {
+    background-color: #fff;
+    font: 13px/20px normal Helvetica, Arial, sans-serif;
+    color: #4F5155;
+    width:100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  h1, h2, h3 {
+    display: inline-block;
+  }
+
+  a {
+    color: #003399;
+    background-color: transparent;
+    font-weight: normal;
+  }
+
+  h1 {
+    color: #444;
+    background-color: transparent;
+    font-size: 4rem;
+    font-weight: bold;
+    margin: 0 0 14px 0;
+    padding: 30px 10px 30px 10px;
+  }
+
+
+
+  code {
+    font-family: Consolas, Monaco, Courier New, Courier, monospace;
+    font-size: 12px;
+    background-color: #f9f9f9;
+    border: 1px solid #D0D0D0;
+    color: #002166;
+    display: block;
+    margin: 14px 0 14px 0;
+    padding: 12px 10px 12px 10px;
+  }
+  
+  p.footer{
+    text-align: right;
+    font-size: 11px;
+    border-top: 1px solid #D0D0D0;
+    line-height: 32px;
+    padding: 0 10px 0 10px;
+    margin: 20px 0 0 0;
+  }
+  
+  #container{
+    margin: 10px;
+    border: 1px solid #D0D0D0;
+    -webkit-box-shadow: 0 0 8px #D0D0D0;
+  }
+
+  #header {
+    height: 10%;
+    min-height: 75px;
+    background: black;//#fafafa;
+    border-bottom: inset 2px gray;
+  }
+
+  #header h1, #preloader h1 {
+    background: #E13300;
+    color:white;
+  }
+
+  #preloader h1 {
+    position: absolute;
+    left:0;
+    top:0;
+  }
+
+  #preloader img {
+    position: absolute;
+    width: 10%;
+    left: 45%;
+    top: 45%;
+  }
+
+  #header img {
+    position: absolute;
+    top: 12px;
+    left: 10px;
+  }
+
+  #map {
+    height: 90%;
+    width: 100%;
+    background: #fafafa;
+  }
+
+  .leaflet-control-attribution {
+    display:none;
+  }
+
+  .legend-label {
+    position:absolute;
+    left: 55px;
+    top:20px;
+  }
+
+  #about {
+    position: relative;
+    float:left;
+    background: white;
+  }
+
+  #legend, #about {
+    width: 150px;
+  }
+
+  #legend i {
+    font-size: 30px;
+    position:absolute;
+    left: -10px;
+    top: -10px;
+  }
+
+   #about i {
+    font-size: 30px;
+    position:absolute;
+    right: -10px;
+    top: -10px;
+   }
+
+  #legend i.fa-map-marker {
+    font-size: 38px;
+    maring-top: -5px;
+  }
+
+  #legend .legend-header, #about .about-header, .filters-header {
+    width: 100%;
+    text-align:center;
+    border-bottom: solid gray 1px;
+  }
+
+  #legend .awesome-marker {
+    display:inline-block;
+  }
+
+  .legend-hidden {
+    background: transparent;
+    width: 0px !important;
+    height: 0px;
+  }
+
+  #about.legend-hidden i {
+    top: -35px;
+    right: -30px;
+  }
+
+  #filters.legend-hidden i {
+    top:0;
+    left: -30px;
+  }
+
+  .legend-hidden  #legend i {
+    top:-40px;
+    left: -30px;
+  }
+
+  .marker-cluster{
+    opacity: 0.6;
+    transition: 300ms all;
+  }
+
+  .marker-cluster:hover{
+    opacity: 1.0;
+  }
+
+  .filters-body label {
+    display:block;
+  }
+
+  #search-wrap input {
+    width: 80%;
+    height: 20px;
+    border-radius: 4px;
+  }
+
+  .filters-header {
+    text-align: center;
+  }
+
+  .filters-header i {
+    position:absolute;
+    left: -10px;
+    top: -10px;
+    font-size: 30px;
+  }
+
+  #about {
+    display:block;
+  }
+
+  .map-legends {
+    display:inline-block;
+  }
+
+  #date-picker-wrap {
+    display: inline-block;
+  }
+
+  .ui-datepicker-group {
+    display: inline-block;
+    background:white;
+    margin: 15px 35px;
+  }
+
+  #ui-datepicker-div {
+    background:white;
+    z-index: 9999999;
+  }
+
+  #web-button {
+    width: 25px;
+    top:3px;
+    position: relative;
+  }
+
+  .map-legend.active {
+    background:#99FF66;
+    border-radius: 3px;
+  }
+
+  #filters .map-legends .map-legend {
+    padding: 10px 10px 5px 10px;
+  }
+
+  #filters {
+    background: #E13300;
+  }
+
+  #preloader { 
+    width: 100%;
+    height: 100%;
+    positon:absolute;
+    background: black;
+  }
+
+
+  .legend-nav > div {
+    position:relative;
+    transition: 250ms all;
+    padding: 10px;
+  }
+
+  .legend-nav > div:hover{
+    background:#4F5155;
+    color:white; 
+  }
+
+  .path-start {
+  -webkit-transition:stroke-dashoffset 3s ease-in;
+     -moz-transition:stroke-dashoffset 3s ease-in;
+       -o-transition:stroke-dashoffset 3s ease-in;
+          transition:stroke-dashoffset 3s ease-in;
+  }

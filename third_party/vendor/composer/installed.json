@@ -1,0 +1,37 @@
+[
+    {
+        "name": "maxcdn/php-maxcdn",
+        "version": "2.0.2",
+        "version_normalized": "2.0.2.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/MaxCDN/php-maxcdn.git",
+            "reference": "a88c8ee41ca40c91b612cc87103a871bc640afc9"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/MaxCDN/php-maxcdn/zipball/a88c8ee41ca40c91b612cc87103a871bc640afc9",
+            "reference": "a88c8ee41ca40c91b612cc87103a871bc640afc9",
+            "shasum": ""
+        },
+        "require": {
+            "ext-curl": "*",
+            "php": ">=5.3.0"
+        },
+        "time": "2014-07-11 00:04:09",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-0": {
+                "MaxCDN\\": "src/",
+                "": "src/"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "description": "PHP Wrapper for MaxCDN Remote Web Services",
+        "homepage": "http://docs.maxcdn.com"
+    }
+]
