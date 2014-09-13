@@ -1,6 +1,10 @@
 (function(){
   function UsageMap(){
-    this.elements = {};
+    this.elements = {
+      map: $('#map'),
+      preloader: $('#preloader')
+    };
+
     this._requestLines = [];
 
     L.mapbox.accessToken = 'pk.eyJ1IjoicnlhbmRncmF5IiwiYSI6IlF5RWtSUEEifQ.8Ma9X7rQULgNbUmqyjlF3g';
@@ -8,90 +12,11 @@
     this._map.addLayer(L.tileLayer('https://{s}.tiles.mapbox.com/v3/examples.map-i87786ca/{z}/{x}/{y}.png'))
     this._map.setView([41.8819, -87.6278], 3);
     this._map._layersMinZoom = 3;
-    this.get_data();
+    this.get_init_data();
     this.make_legend();
     this.make_about();
     this.make_filters();
     this.set_hooks();
-    this.pop_maps = {
-     'lax':{
-        loc:"Los Angeles",
-        coordinate: { latitude: 33.926077,longitude:-118.394123},
-        color:'blue',
-        region:'US'
-     },
-     'sea':{
-         loc:"Seattle",
-         coordinate: { latitude: 47.494136,longitude:-122.2944099},
-         color:'red',
-        fillKey: 'pop',
-        region:'US'
-       },
-     'jfk':{
-        loc:"New York",
-        coordinate:{ latitude: 40.7200972,longitude:-74.0046293},
-        color:'green',
-        fillKey: 'pop',
-        region:'US'
-     },
-     'atl':{
-       loc:"Atlanta",
-       coordinate:{ latitude:33.7545152,longitude:-84.3901396 },
-       color:'orange',
-        fillKey: 'pop',
-        region:'US'
-     },
-     'ams':{
-       loc:"Amsterdam",
-       coordinate:{ latitude:52.3365239,longitude:4.9318931 },
-       color:'purple',
-        fillKey: 'pop',
-        region:'EU'
-     },
-     'dal':{
-       loc:"Dallas",
-       coordinate:{ latitude:32.8206645,longitude: -96.7313396 },
-       color:'purple',
-        fillKey: 'pop',
-        region:'US'
-     },
-     'chi':{
-       loc:"Chicago",
-       coordinate:{ latitude:41.8337329,longitude:-87.7321555 },
-       color:'deeppink',
-        fillKey: 'pop',
-        region:'US'
-     },
-     'vir':{
-       loc:"Ashburn, VA",
-       coordinate:{ latitude:39.0156917,longitude:-77.4583847 },
-       color:'yellow',
-        fillKey: 'pop',
-        region:'US'
-     },
-     'lhr':{
-       loc:"London",
-       coordinate:{ latitude:51.4997434,longitude:-0.0107621 },
-       color:'orange',
-        fillKey: 'pop',
-        region:'EU'
-     },
-     'sfo':{
-       loc:"San Francisco",
-       coordinate:{ latitude:37.616418,longitude:-122.4204358 },
-       color:'orange',
-        fillKey: 'pop',
-        region:'US'
-     },
-     'fra':{
-       loc:"Frankfurt",
-       coordinate:{ latitude:50.1171769,longitude:8.7234794 },
-       color:'purple',
-        fillKey: 'pop',
-        region:'EU'
-     }
-   };
-
   }
 
   UsageMap.prototype.set_hooks = function(){
@@ -101,7 +26,7 @@
     els.filters.on('click', $.proxy(this.toggle_request_web, this));
   };
 
-  UsageMap.prototype.get_data = function(){
+  UsageMap.prototype.get_init_data = function(){
     $.ajax({
       url: "/index.php/api/get_data",
       success: $.proxy(this.handle_response, this)
@@ -111,24 +36,20 @@
   UsageMap.prototype.handle_response = function(data){
     var parsed = this.parse_response(data);
     this.plot_markers(parsed.mapData);
-    this.update_charts(parsed.chartData);
+  };
+
+  UsageMap.prototype.make_custom_icon = function(cluster){
+    var childCount = cluster.getChildCount();
+    var c = ' marker-cluster-medium';
+    return new L.DivIcon({ html: '<div><span>' + childCount + '</span></div>', className: 'marker-cluster' + c, iconSize: new L.Point(40, 40) });
   };
 
   UsageMap.prototype.plot_markers = function(data){
     var markers = new L.MarkerClusterGroup();
     markers.options.showCoverageOnHover = false;
-    markers.options.iconCreateFunction =  function (cluster) {
-      var childCount = cluster.getChildCount();
-      var c = ' marker-cluster-medium';
-      return new L.DivIcon({ html: '<div><span>' + childCount + '</span></div>', className: 'marker-cluster' + c, iconSize: new L.Point(40, 40) });
-    };
-
-    var versionCounts = {};
-    var totalRequests = data.length;
+    markers.options.iconCreateFunction =  this.make_custom_icon;
 
     for(var i = 0; i < data.length; i++){
-      var color = "blue";
-
       switch(data[i].library){
         case 'jquery':
           color = 'blue';
@@ -146,11 +67,8 @@
           color = 'red';
         break;
       }
-       // Creates a red marker with the coffee icon
-      var customMarker = L.AwesomeMarkers.icon({
-        markerColor: color
-      });
 
+      var customMarker = L.AwesomeMarkers.icon({ markerColor: color });
       var marker = L.marker(data[i].request.latLng, {icon: customMarker});
       marker.on('popupopen', $.proxy(this.get_street_address, this))
 
@@ -161,12 +79,13 @@
     }
 
     this._map.addLayer(markers);
-    this.show_map();
+    $(this.elements.preloader).fadeOut();
   },
 
   UsageMap.prototype.get_street_address = function(e){
     var coords = e.popup.getLatLng();
     var streetAddress = $(e.popup._contentNode).find('.street-address');
+
     $.ajax({
       url: '/index.php/api/reverse_geocode/' + coords.lat + '/' + coords.lng,
       success: function(response){
@@ -189,12 +108,10 @@
 
     for(var i = 0; i < response.length; i++){
       if(!response[i].hasOwnProperty('uri') || response[i].uri.indexOf('.js') == -1){ continue; }
-
       var version = response[i].uri;
-
-      var flag = false;
-      if(version.indexOf('rc') > -1){ flag = true; }
+      var rc = version.indexOf('rc') > -1 ? true : false;
       var minified = version.indexOf('.min') > -1;
+
       version = version.substring(1).split('/');
       
       if(version.length === 1 && version[0].indexOf('jquery') === 0){
@@ -210,7 +127,7 @@
         }
       }
 
-      if(!flag){ 
+      if(!rc){ 
         if(version.length === 2){
           var release = version[1].split('.');
           if(release.length === 1){ 
@@ -222,7 +139,6 @@
       }
 
       version[2] = minified;
-
       version = {
         library: version[0],
         version: version[1] || '',
@@ -234,7 +150,8 @@
         }
       };
 
-      var pop = this.pop_maps[response[i].pop];
+      // accessing member of pop_maps global //
+      var pop = pop_maps[response[i].pop];
       requestPopPairs.push([[pop.coordinate.latitude, pop.coordinate.longitude], version.request.latLng]);
       parsed.push(version);
 
@@ -248,15 +165,6 @@
 
     this.requestPopPairs = requestPopPairs;
     return { mapData: parsed, chartData: versionCounts };
-  };
-
-  UsageMap.prototype.show_map = function(){
-    $('#preloader').fadeOut();
-
-  };
-
-  UsageMap.prototype.update_charts = function(data){
-
   };
 
   UsageMap.prototype.make_legend = function(data, totalRequests){
@@ -332,17 +240,10 @@
     function obj(ll) { return { y: ll[0], x: ll[1] }; }
 
     for(var i = 0; i < pairs.length; i++) {
-      var generator = new arc.GreatCircle(
-              obj(pairs[i][0]),
-              obj(pairs[i][1]));
+      var generator = new arc.GreatCircle(obj(pairs[i][0]), obj(pairs[i][1]));
       var line = generator.Arc(100, { offset: 10 });
-      var newLine = L.polyline(line.geometries[0].coords.map(function(c) {
-          return c.reverse();
-      }), {
-          color: '#fff',
-          weight: 1,
-          opacity: 0.5
-      });
+      var lineOpts = { color: '#fff', weight: 1, opacity: 0.5 };
+      var newLine = L.polyline(line.geometries[0].coords.map(function(c) { return c.reverse();}), lineOpts);
 
       this._requestLines.push(newLine);
       newLine.addTo(this._map);
@@ -352,13 +253,9 @@
       newLine._path.style.strokeDashoffset = totalLength;
       newLine._path.style.strokeDasharray = totalLength;
       setTimeout((function(path) {
-          return function() {
-              path.style.strokeDashoffset = 0;
-          };
+          return function() { path.style.strokeDashoffset = 0; };
       })(newLine._path), i * 100);
-      }
-    };
-
+    }
+  };
   new UsageMap();
-
 })();
