@@ -12,10 +12,11 @@
     this._map.addLayer(L.tileLayer('https://{s}.tiles.mapbox.com/v3/examples.map-i87786ca/{z}/{x}/{y}.png'))
     this._map.setView([41.8819, -87.6278], 3);
     this._map._layersMinZoom = 3;
-    this.get_init_data();
+
+    this.make_api_request("/index.php/api/get_data", $.proxy(this.handle_usage_data_response, this));
     this.make_legend();
     this.make_about();
-    this.make_filters();
+    this.make_web_button();
     this.set_hooks();
   }
 
@@ -26,22 +27,37 @@
     els.filters.on('click', $.proxy(this.toggle_request_web, this));
   };
 
-  UsageMap.prototype.get_init_data = function(){
+  UsageMap.prototype.make_api_request = function(url, callback){
     $.ajax({
-      url: "/index.php/api/get_data",
-      success: $.proxy(this.handle_response, this)
+      url: url,
+      success: callback
     });
   };
 
-  UsageMap.prototype.handle_response = function(data){
-    var parsed = this.parse_response(data);
+  UsageMap.prototype.reverse_geocode = function(e){
+    var coords = e.popup.getLatLng();
+    var streetAddress = $(e.popup._contentNode).find('.street-address');
+    var url = '/index.php/api/reverse_geocode/' + coords.lat + '/' + coords.lng;
+
+    this.make_api_request(url, $.proxy(this.populate_popup_street_address, this, streetAddress));
+  };
+
+  UsageMap.prototype.populate_popup_street_address = function(streetAddressField, response){
+    if(response.hasOwnProperty('error')){
+      streetAddressField.text(response.error);
+    } else {
+      streetAddressField.text(response.freeformAddress);
+    }
+  };
+
+  UsageMap.prototype.handle_usage_data_response = function(data){
+    var parsed = this.parse_usage_data(data);
     this.plot_markers(parsed.mapData);
   };
 
   UsageMap.prototype.make_custom_icon = function(cluster){
     var childCount = cluster.getChildCount();
-    var c = ' marker-cluster-medium';
-    return new L.DivIcon({ html: '<div><span>' + childCount + '</span></div>', className: 'marker-cluster' + c, iconSize: new L.Point(40, 40) });
+    return new L.DivIcon({ html: '<div><span>' + childCount + '</span></div>', className: 'marker-cluster marker-cluster-medium', iconSize: new L.Point(40, 40) });
   };
 
   UsageMap.prototype.plot_markers = function(data){
@@ -70,7 +86,7 @@
 
       var customMarker = L.AwesomeMarkers.icon({ markerColor: color });
       var marker = L.marker(data[i].request.latLng, {icon: customMarker});
-      marker.on('popupopen', $.proxy(this.get_street_address, this))
+      marker.on('popupopen', $.proxy(this.reverse_geocode, this))
 
       //need to add minified indication
       var content = "<div>Library: " + data[i].library + " </div><div> Version: " + data[i].version + "</div><div>Referer: <a href='" + data[i].request.referer + "' target='_blank' >" + data[i].request.referer + " </a></div><div>Address: <span  class='street-address'></span></div>";
@@ -80,27 +96,9 @@
 
     this._map.addLayer(markers);
     $(this.elements.preloader).fadeOut();
-  },
-
-  UsageMap.prototype.get_street_address = function(e){
-    var coords = e.popup.getLatLng();
-    var streetAddress = $(e.popup._contentNode).find('.street-address');
-
-    $.ajax({
-      url: '/index.php/api/reverse_geocode/' + coords.lat + '/' + coords.lng,
-      success: function(response){
-        var address;
-        if(response.hasOwnProperty('error')){
-          address = response.error;
-        } else {
-          address = response.freeformAddress;
-        }
-        streetAddress.text(address);
-      } 
-    });
   };
 
-  UsageMap.prototype.parse_response = function(response){
+  UsageMap.prototype.parse_usage_data = function(response){
     var parsed = [];
     var versionCounts = {};
     var totalRequests = response.length;
@@ -194,7 +192,7 @@
     this.elements.about_header = $('#about-header');
   };
 
-  UsageMap.prototype.make_filters = function(){
+  UsageMap.prototype.make_web_button = function(){
     var about = $("<div id='filters' class='map-legends wax-legends leaflet-control'></div>");
     var aboutInner = $('<div class="map-legend wax-legend"></div>');
     var aboutTitle = $("<div><img id='web-button' src='/assets/img/spiderweb.png' alt='Watch it happen.'' /></div>").appendTo(aboutInner);
@@ -214,11 +212,6 @@
   UsageMap.prototype.toggle_about = function(e){
     $(e.currentTarget).toggleClass('legend-hidden');
     $(e.currentTarget).find('i').toggleClass('fa-arrow-circle-o-down fa-question-circle'); 
-  };
-
-  UsageMap.prototype.toggle_filters = function(e){
-    $(e.currentTarget).toggleClass('legend-hidden');
-    $(e.currentTarget).find('i').toggleClass('fa-arrow-circle-o-right fa-filter'); 
   };
 
   UsageMap.prototype.toggle_request_web = function(e){
