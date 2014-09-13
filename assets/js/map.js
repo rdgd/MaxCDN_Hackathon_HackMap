@@ -8,93 +8,33 @@
     this._requestLines = [];
 
     L.mapbox.accessToken = 'pk.eyJ1IjoicnlhbmRncmF5IiwiYSI6IlF5RWtSUEEifQ.8Ma9X7rQULgNbUmqyjlF3g';
+
     this._map = L.mapbox.map('map', {});
     this._map.addLayer(L.tileLayer('https://{s}.tiles.mapbox.com/v3/examples.map-i87786ca/{z}/{x}/{y}.png'))
     this._map.setView([41.8819, -87.6278], 3);
     this._map._layersMinZoom = 3;
 
     this._make_api_request("/index.php/api/get_data", $.proxy(this._handle_usage_data_response, this));
-    this.make_legend();
-    this.make_about();
-    this.make_request_web_button();
+    this._make_legend();
+    this._make_about();
+    this._make_request_web_button();
     this._set_hooks();
     this._elements.legend.click();
   }
 
   UsageMap.prototype._set_hooks = function(){
-    var els = this._elements;
-    els.legend.on('click', $.proxy(this.toggle_legend, this));
-    els.about.on('click', $.proxy(this.toggle_about, this));
-    els.filters.on('click', $.proxy(this.toggle_request_web, this));
+    this._elements.legend.on('click', $.proxy(this.toggle_legend, this));
+    this._elements.about.on('click', $.proxy(this.toggle_about, this));
+    this._elements.filters.on('click', $.proxy(this.toggle_request_web, this));
   };
 
   UsageMap.prototype._make_api_request = function(url, callback){
-    $.ajax({
-      url: url,
-      success: callback
-    });
-  };
-
-  UsageMap.prototype.reverse_geocode = function(e){
-    var coords = e.popup.getLatLng();
-    var streetAddress = $(e.popup._contentNode).find('.street-address');
-    var url = '/index.php/api/reverse_geocode/' + coords.lat + '/' + coords.lng;
-
-    this._make_api_request(url, $.proxy(this.populate_popup_street_address, this, streetAddress));
-  };
-
-  UsageMap.prototype.populate_popup_street_address = function(streetAddressField, response){
-    if(response.hasOwnProperty('error')){
-      streetAddressField.text(response.error);
-    } else {
-      streetAddressField.text(response.freeformAddress);
-    }
+    $.ajax({ url: url, success: callback });
   };
 
   UsageMap.prototype._handle_usage_data_response = function(data){
     var parsed = this.parse_usage_data(data);
     this.plot_markers(parsed.mapData);
-  };
-
-  UsageMap.prototype.plot_markers = function(data){
-    var markers = new L.MarkerClusterGroup();
-    markers.options.showCoverageOnHover = false;
-    markers.options.iconCreateFunction =  function(cluster){
-      var childCount = cluster.getChildCount();
-      return new L.DivIcon({ html: '<div><span>' + childCount + '</span></div>', className: 'marker-cluster marker-cluster-medium', iconSize: new L.Point(40, 40) });
-    };
-    
-    for(var i = 0; i < data.length; i++){
-      switch(data[i].library){
-        case 'jquery':
-          color = 'blue';
-        break;
-        case 'mobile': 
-          color = 'green';
-        break;
-        case 'ui':
-          color = 'orange';
-        break;
-        case 'migrate':
-          color = 'cadetblue';
-        break;
-        default: 
-          color = 'red';
-        break;
-      }
-
-      var customMarker = L.AwesomeMarkers.icon({ markerColor: color });
-      var marker = L.marker(data[i].request.latLng, {icon: customMarker});
-      marker.on('popupopen', $.proxy(this.reverse_geocode, this))
-
-      //need to add minified indication
-      var content = "<div>Library: " + data[i].library + " </div><div> Version: " + data[i].version + "</div><div>Referer: <a href='" + data[i].request.referer + "' target='_blank' >" + data[i].request.referer + " </a></div><div>Address: <span  class='street-address'></span></div>";
-      marker.bindPopup(content);
-      markers.addLayer(marker);
-    }
-
-    this._map.addLayer(markers);
-    $(this._elements.preloader).fadeOut();
   };
 
   UsageMap.prototype.parse_usage_data = function(response){
@@ -164,7 +104,64 @@
     return { mapData: parsed, chartData: versionCounts };
   };
 
-  UsageMap.prototype.make_legend = function(data, totalRequests){
+  UsageMap.prototype.plot_markers = function(data){
+    var markers = new L.MarkerClusterGroup();
+    markers.options.showCoverageOnHover = false;
+    markers.options.iconCreateFunction =  function(cluster){
+      var childCount = cluster.getChildCount();
+      return new L.DivIcon({ html: '<div><span>' + childCount + '</span></div>', className: 'marker-cluster marker-cluster-medium', iconSize: new L.Point(40, 40) });
+    };
+    
+    for(var i = 0; i < data.length; i++){
+      switch(data[i].library){
+        case 'jquery':
+          color = 'blue';
+        break;
+        case 'mobile': 
+          color = 'green';
+        break;
+        case 'ui':
+          color = 'orange';
+        break;
+        case 'migrate':
+          color = 'cadetblue';
+        break;
+        default: 
+          color = 'red';
+        break;
+      }
+
+      var customMarker = L.AwesomeMarkers.icon({ markerColor: color });
+      var marker = L.marker(data[i].request.latLng, {icon: customMarker});
+      marker.on('popupopen', $.proxy(this.reverse_geocode, this))
+
+      //need to add minified indication
+      var content = "<div>Library: " + data[i].library + " </div><div> Version: " + data[i].version + "</div><div>Referer: <a href='" + data[i].request.referer + "' target='_blank' >" + data[i].request.referer + " </a></div><div>Address: <span  class='street-address'></span></div>";
+      marker.bindPopup(content);
+      markers.addLayer(marker);
+    }
+
+    this._map.addLayer(markers);
+    $(this._elements.preloader).fadeOut();
+  };
+
+  UsageMap.prototype.reverse_geocode = function(e){
+    var coords = e.popup.getLatLng();
+    var streetAddress = $(e.popup._contentNode).find('.street-address');
+    var url = '/index.php/api/reverse_geocode/' + coords.lat + '/' + coords.lng;
+
+    this._make_api_request(url, $.proxy(this.populate_popup_street_address, this, streetAddress));
+  };
+
+  UsageMap.prototype.populate_popup_street_address = function(streetAddressField, response){
+    if(response.hasOwnProperty('error')){
+      streetAddressField.text(response.error);
+    } else {
+      streetAddressField.text(response.freeformAddress);
+    }
+  };
+
+  UsageMap.prototype._make_legend = function(data, totalRequests){
     var legend = $("<div id='legend'></div>");
     var legendTitle = $("<div class='legend-header'><i class='fa fa-arrow-circle-o-down'></i><strong>Legend</strong></div>").appendTo(legend);
     var legendBody = $("<nav class='legend clearfix legend-nav'></nav>").appendTo(legend);
@@ -179,7 +176,12 @@
     this._elements.legend_header = $('.legend-header');
   };
 
-  UsageMap.prototype.make_about = function(){
+  UsageMap.prototype.toggle_legend = function(e){
+    $(e.currentTarget).closest('.map-legends').toggleClass('legend-hidden');
+    this._elements.legend_header.find('i').toggleClass('fa-arrow-circle-o-down fa-map-marker'); 
+  };
+
+  UsageMap.prototype._make_about = function(){
     var about = $("<div id='about' class='map-legends wax-legends leaflet-control'></div>");
     var aboutInner = $('<div class="map-legend wax-legend"></div>').appendTo(about);
     var aboutHeader = $("<div class='about-header'><i class='fa fa-arrow-circle-o-down'></i><strong>About</strong></div>").appendTo(aboutInner);
@@ -190,7 +192,12 @@
     this._elements.about = about;
   };
 
-  UsageMap.prototype.make_request_web_button = function(){
+  UsageMap.prototype.toggle_about = function(e){
+    $(e.currentTarget).toggleClass('legend-hidden');
+    $(e.currentTarget).find('i').toggleClass('fa-arrow-circle-o-down fa-question-circle'); 
+  };
+
+  UsageMap.prototype._make_request_web_button = function(){
     var requestWeb = $("<div id='filters' class='map-legends wax-legends leaflet-control'></div>");
     var requestWebInner = $('<div class="map-legend wax-legend"></div>').appendTo(requestWeb);
     var requestWebBtn = $("<div><img id='web-button' src='/assets/img/spiderweb.png' alt='Watch it happen.'' /></div>").appendTo(requestWebInner);
@@ -198,16 +205,6 @@
     $('.leaflet-top.leaflet-right').append(requestWeb);
 
     this._elements.filters = requestWebBtn;
-  };
-
-  UsageMap.prototype.toggle_legend = function(e){
-    $(e.currentTarget).closest('.map-legends').toggleClass('legend-hidden');
-    this._elements.legend_header.find('i').toggleClass('fa-arrow-circle-o-down fa-map-marker'); 
-  };
-
-  UsageMap.prototype.toggle_about = function(e){
-    $(e.currentTarget).toggleClass('legend-hidden');
-    $(e.currentTarget).find('i').toggleClass('fa-arrow-circle-o-down fa-question-circle'); 
   };
 
   UsageMap.prototype.toggle_request_web = function(e){
