@@ -1,6 +1,6 @@
 (function(){
   function UsageMap(){
-    this.elements = {
+    this._elements = {
       map: $('#map'),
       preloader: $('#preloader')
     };
@@ -13,21 +13,21 @@
     this._map.setView([41.8819, -87.6278], 3);
     this._map._layersMinZoom = 3;
 
-    this.make_api_request("/index.php/api/get_data", $.proxy(this.handle_usage_data_response, this));
+    this._make_api_request("/index.php/api/get_data", $.proxy(this._handle_usage_data_response, this));
     this.make_legend();
     this.make_about();
-    this.make_web_button();
-    this.set_hooks();
+    this.make_request_web_button();
+    this._set_hooks();
   }
 
-  UsageMap.prototype.set_hooks = function(){
-    var els = this.elements;
+  UsageMap.prototype._set_hooks = function(){
+    var els = this._elements;
     els.legend.on('click', $.proxy(this.toggle_legend, this));
     els.about.on('click', $.proxy(this.toggle_about, this));
     els.filters.on('click', $.proxy(this.toggle_request_web, this));
   };
 
-  UsageMap.prototype.make_api_request = function(url, callback){
+  UsageMap.prototype._make_api_request = function(url, callback){
     $.ajax({
       url: url,
       success: callback
@@ -39,7 +39,7 @@
     var streetAddress = $(e.popup._contentNode).find('.street-address');
     var url = '/index.php/api/reverse_geocode/' + coords.lat + '/' + coords.lng;
 
-    this.make_api_request(url, $.proxy(this.populate_popup_street_address, this, streetAddress));
+    this._make_api_request(url, $.proxy(this.populate_popup_street_address, this, streetAddress));
   };
 
   UsageMap.prototype.populate_popup_street_address = function(streetAddressField, response){
@@ -50,21 +50,19 @@
     }
   };
 
-  UsageMap.prototype.handle_usage_data_response = function(data){
+  UsageMap.prototype._handle_usage_data_response = function(data){
     var parsed = this.parse_usage_data(data);
     this.plot_markers(parsed.mapData);
-  };
-
-  UsageMap.prototype.make_custom_icon = function(cluster){
-    var childCount = cluster.getChildCount();
-    return new L.DivIcon({ html: '<div><span>' + childCount + '</span></div>', className: 'marker-cluster marker-cluster-medium', iconSize: new L.Point(40, 40) });
   };
 
   UsageMap.prototype.plot_markers = function(data){
     var markers = new L.MarkerClusterGroup();
     markers.options.showCoverageOnHover = false;
-    markers.options.iconCreateFunction =  this.make_custom_icon;
-
+    markers.options.iconCreateFunction =  function(cluster){
+      var childCount = cluster.getChildCount();
+      return new L.DivIcon({ html: '<div><span>' + childCount + '</span></div>', className: 'marker-cluster marker-cluster-medium', iconSize: new L.Point(40, 40) });
+    };
+    
     for(var i = 0; i < data.length; i++){
       switch(data[i].library){
         case 'jquery':
@@ -95,7 +93,7 @@
     }
 
     this._map.addLayer(markers);
-    $(this.elements.preloader).fadeOut();
+    $(this._elements.preloader).fadeOut();
   };
 
   UsageMap.prototype.parse_usage_data = function(response){
@@ -176,37 +174,34 @@
     var redMarker = $('<div><div class="awesome-marker-icon-red awesome-marker" tabindex="0" style="width: 35px; height: 45px; position:relative;"><i class=" glyphicon glyphicon-coffee  icon-white"></i></div><span class="legend-label">Other</span></div>').appendTo(legendBody);
 
     this.legend = this._map.legendControl.addLegend(legend[0].outerHTML);
-    this.elements.legend = $("#legend");
-    this.elements.legend_header = $('.legend-header');
+    this._elements.legend = $("#legend");
+    this._elements.legend_header = $('.legend-header');
   };
 
   UsageMap.prototype.make_about = function(){
     var about = $("<div id='about' class='map-legends wax-legends leaflet-control'></div>");
-    var aboutInner = $('<div class="map-legend wax-legend"></div>');
-    var aboutTitle = $("<div class='about-header'><i class='fa fa-arrow-circle-o-down'></i><strong>About</strong></div>").appendTo(aboutInner);
+    var aboutInner = $('<div class="map-legend wax-legend"></div>').appendTo(about);
+    var aboutHeader = $("<div class='about-header'><i class='fa fa-arrow-circle-o-down'></i><strong>About</strong></div>").appendTo(aboutInner);
     var aboutBody = $("<div class='about-body'>This map shows only sucessful requests (response code 200) for files with extension '.js'. Clicking on the marker icon in the bottom right hand corner gives you a legend. Clicking the web icon in the upper right will draw arcs which indicates what PoP served who.</div>").appendTo(aboutInner);
-    about.append(aboutInner);
+
     $('.leaflet-bottom.leaflet-left').append(about);
 
-    this.elements.about = $('#about');
-    this.elements.about_header = $('#about-header');
+    this._elements.about = about;
   };
 
-  UsageMap.prototype.make_web_button = function(){
-    var about = $("<div id='filters' class='map-legends wax-legends leaflet-control'></div>");
-    var aboutInner = $('<div class="map-legend wax-legend"></div>');
-    var aboutTitle = $("<div><img id='web-button' src='/assets/img/spiderweb.png' alt='Watch it happen.'' /></div>").appendTo(aboutInner);
-    
-    about.append(aboutInner);
-    $('.leaflet-top.leaflet-right').append(about);
+  UsageMap.prototype.make_request_web_button = function(){
+    var requestWeb = $("<div id='filters' class='map-legends wax-legends leaflet-control'></div>");
+    var requestWebInner = $('<div class="map-legend wax-legend"></div>').appendTo(requestWeb);
+    var requestWebBtn = $("<div><img id='web-button' src='/assets/img/spiderweb.png' alt='Watch it happen.'' /></div>").appendTo(requestWebInner);
 
-    this.elements.filters = $('#web-button');
-    this.elements.filters_header = $('.filters-header');
+    $('.leaflet-top.leaflet-right').append(requestWeb);
+
+    this._elements.filters = requestWebBtn;
   };
 
   UsageMap.prototype.toggle_legend = function(e){
     $(e.currentTarget).closest('.map-legends').toggleClass('legend-hidden');
-    this.elements.legend_header.find('i').toggleClass('fa-arrow-circle-o-down fa-map-marker'); 
+    this._elements.legend_header.find('i').toggleClass('fa-arrow-circle-o-down fa-map-marker'); 
   };
 
   UsageMap.prototype.toggle_about = function(e){
@@ -216,20 +211,20 @@
 
   UsageMap.prototype.toggle_request_web = function(e){
     if($(e.currentTarget).closest('.map-legend').hasClass('active')){
-      this.destroy_activity_drawing();
+      this.destroy_request_web();
     } else {
-      this.draw_activity(this.requestPopPairs);
+      this.draw_request_web(this.requestPopPairs);
     }
     $(e.currentTarget).closest('.map-legend').toggleClass('active');
   };
 
-  UsageMap.prototype.destroy_activity_drawing = function(){
+  UsageMap.prototype.destroy_request_web = function(){
     for(line in this._requestLines){
       this._map.removeLayer(this._requestLines[line]);
     }
   };
 
-  UsageMap.prototype.draw_activity = function(pairs){
+  UsageMap.prototype.draw_request_web = function(pairs){
     function obj(ll) { return { y: ll[0], x: ll[1] }; }
 
     for(var i = 0; i < pairs.length; i++) {
