@@ -18,6 +18,7 @@
     this.make_about();
     this.make_request_web_button();
     this._set_hooks();
+    this._elements.legend.click();
   }
 
   UsageMap.prototype._set_hooks = function(){

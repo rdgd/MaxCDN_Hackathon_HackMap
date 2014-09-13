@@ -30,5 +30,5 @@
 	<div id="map"></div>
 </body>
 	<script src="/assets/js/pop_maps.js"></script>
-	<script src="/assets/js/main.js"></script>
+	<script src="/assets/js/map.js"></script>
 </html>
