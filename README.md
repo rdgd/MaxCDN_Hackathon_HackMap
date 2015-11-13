@@ -1,4 +1,4 @@
 MaxCDN Hackathon App - "HackMap"
 ========================
 
-Needs refactor and integration of static file instead of live API endpoint.
+Unfortunately the route/service used to retrieve data from MaxCDN is dead.
